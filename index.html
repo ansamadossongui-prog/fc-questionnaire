@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit Financement PME — Financement & Croissance</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#1B2A6B;--green:#3DAA3F;--blue:#2E6FA3;--light-navy:#E8EBF5;--light-green:#E8F5E8;--light-blue:#E3EEF7;--amber:#BA7517;--light-amber:#FAEEDA;--gray:#5F5E5A;--light-gray:#F1EFE8;--mid-gray:#D3D1C7;--red:#A32D2D;--light-red:#FCEBEB;--white:#fff;--black:#1A1A1A;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f6fa;color:var(--black);min-height:100vh}
+.site-header{background:var(--navy);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.site-header-right{text-align:right}
+.site-header-right .brand{font-size:15px;font-weight:700;color:#fff}
+.site-header-right .tagline{font-size:11px;color:rgba(255,255,255,.65);margin-top:2px}
+.green-stripe{height:4px;background:var(--green)}
+.app{max-width:760px;margin:0 auto;padding:28px 16px 60px}
+.level-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.lvl-btn{padding:11px 14px;border:1.5px solid var(--mid-gray);border-radius:10px;text-align:center;cursor:pointer;background:#fff;transition:all .15s}
+.lvl-btn.active{border-color:var(--blue);background:var(--light-blue);color:var(--navy)}
+.lvl-btn strong{display:block;font-size:13px;font-weight:600;margin-bottom:2px}
+.lvl-btn span{font-size:11px;color:var(--gray)}
+.lvl-btn.active span{color:var(--blue)}
+.progress-wrap{margin-bottom:6px}
+.progress-bar{background:var(--light-gray);border-radius:4px;height:6px;overflow:hidden}
+.progress-fill{background:var(--blue);height:6px;border-radius:4px;transition:width .35s ease}
+.progress-info{display:flex;justify-content:space-between;font-size:11px;color:var(--gray);margin-top:5px;margin-bottom:20px}
+.q-title{font-size:16px;font-weight:600;color:var(--navy);margin-bottom:5px;line-height:1.45}
+.q-hint{font-size:12px;color:var(--gray);margin-bottom:14px;line-height:1.5}
+.opts{display:grid;gap:8px;margin-bottom:20px}
+.opt{padding:11px 15px;border:1.5px solid var(--mid-gray);border-radius:10px;cursor:pointer;font-size:13px;background:#fff;color:var(--black);text-align:left;transition:all .13s;position:relative}
+.opt:hover{border-color:var(--blue);background:var(--light-blue)}
+.opt.sel{border-color:var(--blue);background:var(--light-blue);font-weight:600;color:var(--navy)}
+.opt .sub{font-size:11px;color:var(--gray);display:block;margin-top:3px}
+.opt.sel .sub{color:var(--blue)}
+.nav{display:flex;gap:10px;justify-content:space-between;margin-top:4px}
+.btn{padding:11px 24px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--mid-gray);background:#fff;color:var(--black);transition:all .13s}
+.btn:hover{background:var(--light-gray)}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{background:#1B5A8F}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+#rapport{display:none}
+#rapport.visible{display:block}
+.r-hero{background:var(--navy);border-radius:14px;padding:28px 24px;margin-bottom:16px;color:#fff}
+.r-hero-inner{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.r-hero h2{font-size:20px;font-weight:600;margin-bottom:4px}
+.r-hero .sub{font-size:12px;opacity:.7;margin-bottom:14px}
+.r-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.r-chip{background:rgba(255,255,255,.12);font-size:11px;padding:3px 10px;border-radius:10px}
+.score-circle{width:90px;height:90px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;flex-shrink:0;background:rgba(255,255,255,.15);border:3px solid rgba(255,255,255,.3)}
+.score-val{font-size:30px;font-weight:700;line-height:1;color:#fff}
+.score-den{font-size:11px;opacity:.7;color:#fff}
+.routing-banner{margin-top:14px;padding:12px 16px;border-radius:10px;font-size:13px}
+.routing-sub{font-size:12px;opacity:.85;margin-top:4px;line-height:1.5}
+.r-section{background:#fff;border:1px solid var(--mid-gray);border-radius:12px;padding:18px 20px;margin-bottom:12px}
+.r-section h3{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sec-num{background:var(--green);color:#fff;width:22px;height:22px;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700}
+.dim-bars{display:grid;gap:8px;margin-top:12px}
+.dim-row{display:grid;grid-template-columns:1fr;gap:3px}
+.dim-row-top{display:flex;align-items:center;justify-content:space-between}
+.dim-name{font-size:11px;font-weight:600}
+.dim-score{font-size:11px;font-weight:700}
+.dim-bar-bg{background:var(--light-gray);border-radius:4px;height:7px;overflow:hidden}
+.dim-bar-fill{height:7px;border-radius:4px;transition:width .6s ease}
+.dim-weight{font-size:10px;color:var(--gray)}
+.sol-card{border:1px solid var(--mid-gray);border-radius:10px;padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--blue)}
+.sol-card.match-green{border-left-color:var(--green)}
+.sol-card.match-blue{border-left-color:var(--blue)}
+.sol-card.match-amber{border-left-color:var(--amber)}
+.sol-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px}
+.sol-name{font-size:13px;font-weight:700;color:var(--navy)}
+.sol-type{font-size:11px;color:var(--gray);margin-bottom:8px}
+.match-pill{font-size:10px;padding:2px 10px;border-radius:10px;font-weight:600;white-space:nowrap;flex-shrink:0}
+.match-pill.green{background:var(--light-green);color:#2B7A2E}
+.match-pill.blue{background:var(--light-blue);color:#1B5A8F}
+.match-pill.amber{background:var(--light-amber);color:var(--amber)}
+.sol-cond{font-size:11px;color:var(--gray);margin-bottom:8px;padding-top:8px;border-top:1px solid var(--light-gray)}
+.sol-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.sol-tag{font-size:10px;padding:3px 9px;background:var(--light-gray);border-radius:6px;color:var(--navy)}
+.sol-action{font-size:12px;color:var(--blue);font-weight:500}
+.act-row{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--light-gray)}
+.act-row:last-child{border:none}
+.act-j{font-size:10px;font-weight:700;color:#fff;background:var(--navy);border-radius:6px;padding:3px 7px;white-space:nowrap;flex-shrink:0;margin-top:1px}
+.act-j.mid{background:var(--blue)}
+.act-j.late{background:var(--green)}
+.act-txt{font-size:12px;line-height:1.55}
+.opti-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:500px){.opti-grid{grid-template-columns:1fr}}
+.opti-card{background:var(--light-gray);border:1px solid var(--mid-gray);border-radius:9px;padding:11px 13px}
+.opti-title{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.opti-body{font-size:11px;color:var(--gray);line-height:1.5}
+.blocker-box{background:var(--light-red);border:1px solid #F09595;border-radius:9px;padding:12px 14px;margin-bottom:12px}
+.blocker-title{font-size:12px;font-weight:700;color:var(--red);margin-bottom:4px}
+.blocker-body{font-size:11px;color:#791F1F;line-height:1.5}
+.ok-box{background:var(--light-green);border:1px solid #9FD9A1;border-radius:9px;padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:600;color:#2B7A2E}
+.cta-box{background:var(--navy);border-radius:14px;padding:28px 24px;text-align:center;margin-top:16px}
+.cta-box h3{font-size:18px;font-weight:700;color:#fff;margin-bottom:8px}
+.cta-box p{font-size:13px;color:rgba(255,255,255,.7);margin-bottom:20px;line-height:1.6;max-width:500px;margin-left:auto;margin-right:auto}
+.cta-deliverables{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;text-align:left}
+@media(max-width:500px){.cta-deliverables{grid-template-columns:1fr}}
+.cta-deliv{padding:10px 12px}
+.cta-deliv-title{font-size:12px;font-weight:700;color:#C9A84C;margin-bottom:3px}
+.cta-deliv-body{font-size:11px;color:rgba(255,255,255,.6);line-height:1.4}
+.cta-phone{font-size:13px;font-weight:700;color:var(--green);margin-top:10px}
+.cta-note{font-size:11px;color:rgba(255,255,255,.5);margin-top:6px}
+.action-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:24px}
+.btn-download{background:#C9A84C;color:#1B2A6B;border:none;padding:13px 28px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-download:hover{background:#B8973B}
+.btn-restart{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.4);padding:12px 22px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-restart:hover{background:rgba(255,255,255,.1)}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+@media(max-width:500px){.kpi-grid{grid-template-columns:1fr 1fr}}
+.kpi-card{background:var(--light-navy);border-radius:9px;padding:10px 12px}
+.kpi-label{font-size:10px;color:var(--gray);margin-bottom:4px}
+.kpi-val{font-size:13px;font-weight:700;color:var(--navy);line-height:1.3}
+
+.id-page{background:#fff;border-radius:14px;border:1px solid var(--mid-gray);padding:28px 24px;margin-bottom:0}
+.id-page h2{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.id-page p{font-size:13px;color:var(--gray);margin-bottom:24px;line-height:1.6}
+.id-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+@media(max-width:500px){.id-grid{grid-template-columns:1fr}}
+.id-field{display:flex;flex-direction:column;gap:5px}
+.id-field.full{grid-column:1/-1}
+.id-label{font-size:12px;font-weight:600;color:var(--navy)}
+.id-label span{color:var(--red)}
+.id-input{padding:10px 13px;border:1.5px solid var(--mid-gray);border-radius:9px;font-size:13px;background:#fff;color:var(--black);font-family:inherit;transition:border-color .13s}
+.id-input:focus{outline:none;border-color:var(--blue)}
+.id-input.error{border-color:var(--red)}
+.id-err{font-size:11px;color:var(--red);margin-top:2px;display:none}
+.id-consent{background:var(--light-navy);border-radius:9px;padding:12px 14px;margin-bottom:20px;font-size:11px;color:var(--gray);line-height:1.6}
+.id-consent strong{color:var(--navy)}
+.site-footer{background:var(--navy);color:rgba(255,255,255,.55);text-align:center;padding:16px;font-size:11px;margin-top:40px}
+.site-footer strong{color:var(--green)}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-right" style="margin-left:auto">
+    <div class="brand">Financement &amp; Croissance</div>
+    <div class="tagline">Évaluez votre capacité à obtenir un financement — Zone UEMOA &amp; CEDEAO</div>
+  </div>
+</header>
+<div class="green-stripe"></div>
+
+<div class="app">
+
+  <!-- PAGE D'IDENTIFICATION -->
+  <div id="id-page">
+    <div class="id-page">
+      <h2>Bienvenue sur l'outil d'audit financement</h2>
+      <p>Avant de commencer, merci de renseigner vos informations. Elles permettront de personnaliser votre rapport et de vous recontacter si vous souhaitez un accompagnement.</p>
+      <div class="id-grid">
+        <div class="id-field">
+          <label class="id-label" for="id-nom">Nom complet <span>*</span></label>
+          <input class="id-input" id="id-nom" type="text" placeholder="Ex : Kouassi Jean-Baptiste" autocomplete="name">
+          <span class="id-err" id="err-nom">Champ obligatoire</span>
+        </div>
+        <div class="id-field">
+          <label class="id-label" for="id-entreprise">Nom de l'entreprise <span>*</span></label>
+          <input class="id-input" id="id-entreprise" type="text" placeholder="Ex : AGROBIO SARL" autocomplete="organization">
+          <span class="id-err" id="err-entreprise">Champ obligatoire</span>
+        </div>
+        <div class="id-field">
+          <label class="id-label" for="id-email">Adresse email <span>*</span></label>
+          <input class="id-input" id="id-email" type="email" placeholder="Ex : contact@entreprise.ci" autocomplete="email">
+          <span class="id-err" id="err-email">Email invalide</span>
+        </div>
+        <div class="id-field">
+          <label class="id-label" for="id-tel">Téléphone / WhatsApp <span>*</span></label>
+          <input class="id-input" id="id-tel" type="tel" placeholder="Ex : +225 07 00 00 00 00" autocomplete="tel">
+          <span class="id-err" id="err-tel">Champ obligatoire</span>
+        </div>
+        <div class="id-field">
+          <label class="id-label" for="id-poste">Fonction / Poste</label>
+          <input class="id-input" id="id-poste" type="text" placeholder="Ex : Directeur Général, Gérant...">
+        </div>
+        <div class="id-field">
+          <label class="id-label" for="id-ville">Ville</label>
+          <input class="id-input" id="id-ville" type="text" placeholder="Ex : Abidjan, Dakar, Bamako...">
+        </div>
+      </div>
+      <div class="id-consent">
+        <strong>Confidentialité :</strong> Vos informations sont utilisées uniquement pour personnaliser votre rapport de diagnostic et, si vous le souhaitez, vous recontacter dans le cadre d'un accompagnement Financement &amp; Croissance. Elles ne sont jamais transmises à des tiers.
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:13px" onclick="startQuestionnaire()">Commencer le diagnostic &#8594;</button>
+    </div>
+  </div>
+
+  <div id="questionnaire" style="display:none">
+    <div style="text-align:center;margin-bottom:24px">
+      <h1 style="font-size:22px;font-weight:700;color:var(--navy);margin-bottom:6px">Audit Financement PME</h1>
+      <p style="font-size:13px;color:var(--gray)">Zone UEMOA &amp; CEDEAO &nbsp;·&nbsp; Score de maturité /10 &nbsp;·&nbsp; Rapport personnalisé</p>
+    </div>
+    <div class="level-toggle">
+      <div class="lvl-btn active" id="lb1" onclick="switchLevel(1)">
+        <strong>Niveau 1 — Rapide</strong><span>12 questions · 4 min</span>
+      </div>
+      <div class="lvl-btn" id="lb2" onclick="switchLevel(2)">
+        <strong>Niveau 2 — Approfondi</strong><span>22 questions · 8 min</span>
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="prog" style="width:8%"></div></div>
+    </div>
+    <div class="progress-info">
+      <span id="step-lbl">Étape 1 sur 12</span>
+      <span id="step-pct">8%</span>
+    </div>
+    <div id="steps-container"></div>
+    <div class="nav">
+      <button class="btn" id="btn-prev" onclick="prevStep()" disabled>&#8592; Précédent</button>
+      <button class="btn btn-primary" id="btn-next" onclick="nextStep()">Suivant &#8594;</button>
+    </div>
+  </div>
+  <div id="rapport"></div>
+</div>
+
+<footer class="site-footer">
+  <strong>Financement &amp; Croissance</strong> &nbsp;·&nbsp; +225 05 46 42 84 95 &nbsp;·&nbsp; Document confidentiel
+</footer>
+
+<!-- DONNÉES JSON : pas de parsing JS, les apostrophes sont sûres -->
+<script id="data-l1" type="application/json">
+[{"sec": "Localisation", "dim": "D1", "q": "Dans quel pays exercez-vous principalement ?", "key": "pays", "opts": [{"l": "Côte d'Ivoire", "pts": 0}, {"l": "Sénégal", "pts": 0}, {"l": "Mali", "pts": 0}, {"l": "Burkina Faso", "pts": 0}, {"l": "Togo / Bénin / Niger", "pts": 0}, {"l": "Ghana / Nigeria", "pts": 0}, {"l": "Autre pays CEDEAO", "pts": 0}]}, {"sec": "D1 — Formalisation", "dim": "D1", "q": "Quel est le statut juridique de votre entreprise ?", "hint": "Le statut OHADA conditionne l'accès aux financements formels.", "key": "statut", "opts": [{"l": "Entreprise individuelle informelle", "pts": 0, "b": "B2"}, {"l": "Entreprise individuelle formelle (RCCM + IFU)", "pts": 5}, {"l": "SARL — Société à Responsabilité Limitée", "pts": 8}, {"l": "EURL — Entreprise Unipersonnelle à Responsabilité Limitée", "pts": 7}, {"l": "SA — Société Anonyme", "pts": 10}, {"l": "SAS — Société par Actions Simplifiée", "pts": 9}, {"l": "SNC — Société en Nom Collectif", "pts": 6}, {"l": "SCS — Société en Commandite Simple", "pts": 6}, {"l": "SCA — Société en Commandite par Actions", "pts": 7}, {"l": "GIE — Groupement d'Intérêt Économique", "pts": 6}, {"l": "Société Civile Immobilière (SCI)", "pts": 7}, {"l": "Société Civile Professionnelle (SCP)", "pts": 7}, {"l": "Société Civile de Moyens (SCM)", "pts": 6}, {"l": "Coopérative / Association formelle", "pts": 5}, {"l": "Projet en cours de création", "pts": 2}]}, {"sec": "D2 — Solidité financière", "dim": "D2", "q": "Quel est votre chiffre d'affaires annuel ?", "hint": "Seuils SYSCOHADA : < 30M = micro, 30–150M = petite, > 150M = PME.", "key": "ca", "opts": [{"l": "Pré-revenue (projet)", "pts": 0}, {"l": "Moins de 30 millions FCFA", "pts": 3}, {"l": "30 à 150 millions FCFA", "pts": 6}, {"l": "150M à 1 milliard FCFA", "pts": 8}, {"l": "1 à 5 milliards FCFA", "pts": 9}, {"l": "Plus de 5 milliards FCFA", "pts": 10}]}, {"sec": "D1 — Formalisation", "dim": "D1", "q": "Depuis combien de temps votre entreprise est-elle active ?", "key": "anciennete", "opts": [{"l": "En création (projet)", "pts": 1}, {"l": "Moins de 1 an", "pts": 3}, {"l": "1 à 3 ans", "pts": 5}, {"l": "3 à 5 ans", "pts": 7}, {"l": "5 à 10 ans", "pts": 9}, {"l": "Plus de 10 ans", "pts": 10}]}, {"sec": "D6 — Potentiel", "dim": "D6", "q": "Dans quel secteur d'activité êtes-vous ?", "hint": "Certains secteurs bénéficient d'aides spécifiques.", "key": "secteur", "opts": [{"l": "Agriculture / Agro-alimentaire", "pts": 8, "boost": "secteur"}, {"l": "Commerce / Distribution / Import-Export", "pts": 5}, {"l": "BTP / Immobilier / Promotion immobilière", "pts": 6}, {"l": "Industrie / Production / Manufacture", "pts": 7}, {"l": "Cosmétique / Beauté / Bien-être", "pts": 6, "boost": "secteur"}, {"l": "Mode / Textile / Prêt-à-porter", "pts": 5}, {"l": "Transport / Logistique / Transit", "pts": 6}, {"l": "Hôtellerie / Restauration / Tourisme", "pts": 5}, {"l": "Tech / Numérique / Fintech", "pts": 8}, {"l": "Énergie / Environnement / Eau", "pts": 9, "boost": "secteur"}, {"l": "Santé / Pharmacie / Médical", "pts": 7, "boost": "secteur"}, {"l": "Éducation / Formation professionnelle", "pts": 7, "boost": "secteur"}, {"l": "Médias / Communication / Marketing", "pts": 5}, {"l": "Services financiers / Assurance / Micro-assurance", "pts": 7}, {"l": "Mines / Ressources naturelles", "pts": 7}, {"l": "Services B2B / Conseil / Expertise", "pts": 5}, {"l": "Artisanat / Art / Économie créative", "pts": 4}, {"l": "Autre secteur", "pts": 4}]}, {"sec": "D5 — Maturité projet", "dim": "D5", "q": "Quel montant de financement recherchez-vous ?", "hint": "En FCFA — chaque dispositif a des tickets minimum et maximum.", "key": "montant", "opts": [{"l": "Moins de 500 000 FCFA", "pts": 4}, {"l": "500 000 à 5 millions FCFA", "pts": 5}, {"l": "5 à 50 millions FCFA", "pts": 6}, {"l": "50 à 200 millions FCFA", "pts": 8}, {"l": "200M à 1 milliard FCFA", "pts": 9}, {"l": "Plus de 1 milliard FCFA", "pts": 10}]}, {"sec": "D5 — Maturité projet", "dim": "D5", "q": "Quel est l'objectif principal de ce financement ?", "key": "objectif", "opts": [{"l": "Démarrage / Amorçage", "pts": 4}, {"l": "Achat matériel / équipements", "pts": 7}, {"l": "Fonds de roulement / BFR", "pts": 6}, {"l": "Développement commercial", "pts": 7}, {"l": "Acquisition / Reprise", "pts": 7}, {"l": "Export / International", "pts": 9, "boost": "export"}, {"l": "R&D / Innovation", "pts": 8}, {"l": "Transition numérique / Énergie", "pts": 8, "boost": "secteur"}]}, {"sec": "D2 — Solidité financière", "dim": "D2", "q": "Disposez-vous d'une comptabilité formelle (SYSCOHADA) ?", "hint": "Exigée par toutes les banques et institutions de développement UEMOA.", "key": "comptabilite", "opts": [{"l": "Oui — tenue par un expert-comptable agréé", "pts": 10, "boost": "compta"}, {"l": "Oui — tenue en interne", "pts": 6}, {"l": "Comptabilité partielle / informelle", "pts": 3}, {"l": "Pas de comptabilité formelle", "pts": 0, "b": "B4"}, {"l": "Pas encore (nouvelle entreprise)", "pts": 1}]}, {"sec": "D2 — Solidité financière", "dim": "D2", "q": "Votre entreprise est-elle actuellement rentable ?", "key": "rentabilite", "opts": [{"l": "Oui — rentable et en croissance", "pts": 10}, {"l": "Oui — rentable mais stable", "pts": 8}, {"l": "À l'équilibre", "pts": 5}, {"l": "Déficitaire mais en amélioration", "pts": 3}, {"l": "Déficitaire", "pts": 1}, {"l": "Pas encore en activité", "pts": 0}]}, {"sec": "D1 — Formalisation", "dim": "D1", "q": "Disposez-vous de garanties mobilisables ?", "hint": "Les banques UEMOA exigent généralement 150–200% du montant en garanties.", "key": "garanties", "opts": [{"l": "Immobilier professionnel ou personnel", "pts": 10}, {"l": "Matériel / équipements nantissables", "pts": 7}, {"l": "Caution solidaire (associés / famille)", "pts": 5}, {"l": "Mécanisme de garantie régional possible", "pts": 6}, {"l": "Aucune garantie disponible", "pts": 1}]}, {"sec": "D3 — Traction marché", "dim": "D3", "q": "Quel est l'état de votre relation avec vos clients ?", "hint": "La preuve de marché est le signal le plus fort pour tout financeur.", "key": "traction", "opts": [{"l": "Contrats fermes signés + revenus récurrents", "pts": 10, "boost": "contrat"}, {"l": "Clients actifs mais sans contrats formels", "pts": 7}, {"l": "Premiers clients en phase de test", "pts": 5}, {"l": "Lettres d'intention / bons de commande", "pts": 6, "boost": "contrat"}, {"l": "Pas encore de clients", "pts": 1}]}, {"sec": "D3 — Traction marché", "dim": "D3", "q": "Utilisez-vous le Mobile Money pour votre activité professionnelle ?", "hint": "L'historique de transactions est reconnu comme critère de solvabilité alternatif.", "key": "mobile", "opts": [{"l": "Oui — compte pro actif > 12 mois", "pts": 10, "boost": "mobile"}, {"l": "Oui — actif mais moins de 12 mois", "pts": 7}, {"l": "Oui — paiements clients uniquement", "pts": 5}, {"l": "Usage personnel uniquement", "pts": 2}, {"l": "Non — pas de Mobile Money", "pts": 0}]}]
+</script>
+
+<script id="data-l2" type="application/json">
+[{"sec": "D2 — Solidité financière", "dim": "D2", "q": "Quel est votre taux de marge brute approximatif ?", "key": "marge", "opts": [{"l": "Moins de 15%", "pts": 3}, {"l": "15 à 30%", "pts": 5}, {"l": "30 à 50%", "pts": 7}, {"l": "Plus de 50%", "pts": 10}, {"l": "Je ne connais pas ce chiffre", "pts": 1}]}, {"sec": "D3 — Traction marché", "dim": "D3", "q": "Avez-vous des créances clients en attente de paiement ?", "key": "creances", "opts": [{"l": "Oui — plus de 30 jours de CA en créances", "pts": 7}, {"l": "Oui — moins de 30 jours de CA", "pts": 8}, {"l": "Non — paiement comptant ou mobile", "pts": 10}]}, {"sec": "D4 — Équipe dirigeante", "dim": "D4", "q": "Quelle est votre expérience dans ce secteur ?", "key": "experience", "opts": [{"l": "Plus de 10 ans", "pts": 10}, {"l": "5 à 10 ans", "pts": 8}, {"l": "2 à 5 ans", "pts": 6}, {"l": "Moins de 2 ans", "pts": 3}, {"l": "Premier projet dans ce secteur", "pts": 1}]}, {"sec": "D4 — Équipe dirigeante", "dim": "D4", "q": "L'entreprise est-elle dirigée ou co-dirigée par une femme ?", "hint": "De nombreux dispositifs régionaux offrent des conditions préférentielles.", "key": "genre", "opts": [{"l": "Oui — dirigeante principale", "pts": 8, "boost": "genre"}, {"l": "Oui — co-dirigeante / associée", "pts": 7, "boost": "genre"}, {"l": "Non", "pts": 5}]}, {"sec": "D4 — Équipe dirigeante", "dim": "D4", "q": "Disposez-vous d'une équipe de direction au-delà du fondateur ?", "key": "equipe", "opts": [{"l": "Équipe complète (finance, opérations, commercial)", "pts": 10}, {"l": "2–3 collaborateurs clés", "pts": 7}, {"l": "1 associé ou co-fondateur", "pts": 5}, {"l": "Solo — fondateur seul", "pts": 2}]}, {"sec": "D5 — Maturité projet", "dim": "D5", "q": "Avez-vous un plan d'affaires formalisé ?", "key": "bp", "opts": [{"l": "Oui — validé par un expert-comptable agréé", "pts": 10}, {"l": "Oui — rédigé en interne", "pts": 7}, {"l": "En cours de rédaction", "pts": 4}, {"l": "Non — pas encore", "pts": 1}]}, {"sec": "D1 — Formalisation", "dim": "D1", "q": "Êtes-vous à jour de vos obligations fiscales et sociales ?", "key": "fiscal", "opts": [{"l": "Oui — attestation fiscale disponible", "pts": 10}, {"l": "Arriérés en cours de régularisation", "pts": 4, "b": "B3"}, {"l": "Situation fiscale non formalisée", "pts": 1, "b": "B3"}]}, {"sec": "D1 — Formalisation", "dim": "D1", "q": "Avez-vous déjà eu des incidents de paiement bancaire ?", "key": "incidents", "opts": [{"l": "Aucun incident — situation nette", "pts": 10}, {"l": "Quelques retards résolus", "pts": 6}, {"l": "Incident signalé à la centrale de risques", "pts": 0, "b": "B1"}, {"l": "Procédure amiable ou judiciaire passée", "pts": 2}]}, {"sec": "D6 — Potentiel", "dim": "D6", "q": "Votre projet a-t-il un fort potentiel d'impact social ou environnemental ?", "key": "impact", "opts": [{"l": "Oui — emploi local, agriculture, santé, éducation", "pts": 9, "boost": "impact"}, {"l": "Oui — énergie verte, eau, environnement", "pts": 10, "boost": "impact"}, {"l": "Impact limité / secteur neutre", "pts": 4}]}, {"sec": "D6 — Potentiel", "dim": "D6", "q": "Avez-vous des ambitions d'expansion régionale (multi-pays CEDEAO) ?", "key": "expansion", "opts": [{"l": "Oui — dans les 2 ans", "pts": 10}, {"l": "Oui — à moyen terme (3–5 ans)", "pts": 7}, {"l": "Développement national uniquement", "pts": 4}]}]
+</script>
+
+<script id="data-devices" type="application/json">
+[
+  {"nom":"Crédit-bail / Leasing équipement","type":"Financement d'équipements — établissements spécialisés","match_color":"green","cond":"Finance 80–100% du matériel · TVA récupérable · Hors bilan · Durée 3–7 ans","tmin":"5M FCFA","tmax":"500M FCFA","taux":"12–18% / an","delai":"3–6 semaines","action":"Obtenir un devis équipementier détaillé puis solliciter une simulation auprès d'un établissement spécialisé de votre région","sk":{"objectif":["matériel","équipement"],"montant":["5 à","50 à"]}},
+  {"nom":"Crédit bancaire + Mécanisme de garantie","type":"Prêt bancaire adossé à un fonds de garantie régional","match_color":"blue","cond":"Bilans SYSCOHADA 3 ans requis · Garanties 150% · Taux 10–15%/an","tmin":"50M FCFA","tmax":"500M FCFA","taux":"10–15% / an","delai":"6–12 semaines","action":"Constituer le dossier avec bilans certifiés, plan d'affaires et état des garanties mobilisables","sk":{"statut":["SARL","SA"],"ca":["150M","1 à 5"],"anciennete":["3 à","5 à","10"],"rentabilite":["rentable"],"comptabilite":["agréé"]}},
+  {"nom":"Financement sectoriel — Développement agricole","type":"Ligne de financement sectoriel — institutions de développement","match_color":"blue","cond":"Secteur agricole prioritaire · Taux préférentiels –2 à –4pts marché","tmin":"100M FCFA","tmax":"2Md FCFA","taux":"Préférentiel –2 à –4pts","delai":"8–16 semaines","action":"Se rapprocher d'un établissement bancaire partenaire pour accéder aux lignes sectorielles disponibles","sk":{"secteur":["Agri","agro"],"montant":["200M","1 milliard"]}},
+  {"nom":"Microfinance agréée","type":"Institution de microfinance sous supervision BCEAO","match_color":"green","cond":"Tickets 500k–20M FCFA · Taux 18–30%/an · Sans garantie immobilière","tmin":"500k FCFA","tmax":"20M FCFA","taux":"18–30% / an","delai":"1–3 semaines","action":"Contacter l'union régionale de microfinance de votre localité avec les justificatifs d'activité","sk":{"montant":["500 000","5 à"],"garanties":["Aucune","Caution"],"statut":["individuelle","informelle"]}},
+  {"nom":"Crédit digital / Mobile Money","type":"Financement adossé à l'historique de transactions mobiles","match_color":"green","cond":"Jusqu'à 5M FCFA · Décision 24–48h · Basé sur historique transactions","tmin":"100k FCFA","tmax":"5M FCFA","taux":"2–5% / mois","delai":"24–48 heures","action":"Activer un compte Mobile Money professionnel et maintenir un volume de transactions régulier","sk":{"mobile":["actif","pro"],"montant":["500 000","5 à"]}},
+  {"nom":"Capital-risque & Investissement régional","type":"Fonds d'investissement en capital — zone UEMOA & CEDEAO","match_color":"amber","cond":"Dilution 10–30% · Scalabilité régionale exigée · Processus 6–12 mois","tmin":"200M FCFA","tmax":"2Md FCFA","taux":"Dilution 10–30%","delai":"6–12 mois","action":"Préparer un mémorandum d'information (pitch deck + KPIs de traction + plan financier audité)","sk":{"secteur":["Tech","Fintech","Numérique"],"expansion":["2 ans"],"montant":["1 milliard","200M"]}},
+  {"nom":"Subventions & Aides nationales","type":"Dispositifs non remboursables — agences nationales de soutien","match_color":"green","cond":"Non remboursable · Délai 3–9 mois · Ciblage jeunes, femmes, agro, numérique","tmin":"1M FCFA","tmax":"50M FCFA","taux":"Non remboursable","delai":"3–9 mois","action":"Se rapprocher du guichet PME de votre région pour identifier les appels à projets en cours","sk":{"genre":["dirigeante"],"anciennete":["création","1 an"],"objectif":["Démarrage","R&D"]}},
+  {"nom":"Financement à impact social / environnemental","type":"Fonds d'investissement à impact — bailleurs internationaux","match_color":"amber","cond":"Participation minority · Impact social mesuré · Patient capital 5–10 ans","tmin":"50M FCFA","tmax":"500M FCFA","taux":"Variable selon fonds","delai":"3–8 mois","action":"Structurer un dossier d'impact avec indicateurs sociaux et environnementaux mesurables","sk":{"impact":["emploi","énergie"],"genre":["dirigeante"],"secteur":["Santé","Éducation","Agri"]}}
+]
+</script>
+
+<script>
+// Charger les données depuis JSON (apostrophes françaises sans risque)
+var L1       = JSON.parse(document.getElementById('data-l1').textContent);
+var L2_EXTRA = JSON.parse(document.getElementById('data-l2').textContent);
+var DEVICES  = JSON.parse(document.getElementById('data-devices').textContent).map(function(d){
+  return Object.assign({}, d, {
+    score: function(a){
+      var s=0;
+      if(!d.sk) return s;
+      Object.keys(d.sk).forEach(function(key){
+        var val=(a[key]||'').toLowerCase();
+        d.sk[key].forEach(function(p){ if(val.indexOf(p.toLowerCase())>=0) s+=20; });
+      });
+      return s;
+    }
+  });
+});
+
+var C={navy:'#1B2A6B',green:'#3DAA3F',blue:'#2E6FA3',lnavy:'#E8EBF5',lgreen:'#E8F5E8',lblue:'#E3EEF7',amber:'#BA7517',lamber:'#FAEEDA',red:'#A32D2D',lred:'#FCEBEB',gray:'#5F5E5A',lgray:'#F1EFE8',mgray:'#D3D1C7'};
+var DIMS={
+  D1:{label:'D1 — Formalisation',weight:0.20,color:C.navy},
+  D2:{label:'D2 — Solidité financière',weight:0.25,color:C.green},
+  D3:{label:'D3 — Traction marché',weight:0.20,color:C.blue},
+  D4:{label:'D4 — Équipe dirigeante',weight:0.15,color:'#7B3D99'},
+  D5:{label:'D5 — Maturité du projet',weight:0.15,color:'#C07A20'},
+  D6:{label:'D6 — Potentiel de marché',weight:0.05,color:'#1A7A6E'}
+};
+var DIM_SHORT=['Formalisation','Solidité finan.','Traction','Équipe','Projet','Potentiel'];
+var level=1,step=0,ans={},steps=L1.slice();
+var profil_repondant={nom:'',entreprise:'',email:'',tel:'',poste:'',ville:''};
+
+function startQuestionnaire(){
+  var nom=document.getElementById('id-nom').value.trim();
+  var entreprise=document.getElementById('id-entreprise').value.trim();
+  var email=document.getElementById('id-email').value.trim();
+  var tel=document.getElementById('id-tel').value.trim();
+  var ok=true;
+  // Validation
+  ['nom','entreprise','tel'].forEach(function(f){
+    var el=document.getElementById('id-'+f);
+    var err=document.getElementById('err-'+f);
+    if(!document.getElementById('id-'+f).value.trim()){
+      el.classList.add('error'); err.style.display='block'; ok=false;
+    } else { el.classList.remove('error'); err.style.display='none'; }
+  });
+  var emailEl=document.getElementById('id-email');
+  var emailErr=document.getElementById('err-email');
+  var emailOk=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if(!emailOk){ emailEl.classList.add('error'); emailErr.style.display='block'; ok=false; }
+  else { emailEl.classList.remove('error'); emailErr.style.display='none'; }
+  if(!ok) return;
+  profil_repondant={
+    nom:nom, entreprise:entreprise, email:email, tel:tel,
+    poste:document.getElementById('id-poste').value.trim(),
+    ville:document.getElementById('id-ville').value.trim()
+  };
+  document.getElementById('id-page').style.display='none';
+  document.getElementById('questionnaire').style.display='block';
+  render();
+}
+
+function switchLevel(n){
+  level=n;
+  document.getElementById('lb1').classList.toggle('active',n===1);
+  document.getElementById('lb2').classList.toggle('active',n===2);
+  steps=n===1?L1.slice():L1.concat(L2_EXTRA);
+  step=0; ans={}; render();
+}
+
+function render(){
+  var tot=steps.length;
+  var pct=Math.round(((step+1)/tot)*100);
+  document.getElementById('prog').style.width=pct+'%';
+  document.getElementById('step-lbl').textContent='Étape '+(step+1)+' sur '+tot;
+  document.getElementById('step-pct').textContent=pct+'%';
+  document.getElementById('btn-prev').disabled=(step===0);
+  document.getElementById('btn-next').textContent=step===tot-1?'Générer mon rapport →':'Suivant →';
+  var s=steps[step];
+  var dimInfo=DIMS[s.dim]||{label:s.dim,color:C.blue,weight:0};
+  var tg=s.opts.length<=4?'grid-template-columns:1fr 1fr;':'';
+  var html='<div class="q-title">'+s.q+'</div>';
+  if(s.hint) html+='<div class="q-hint">'+s.hint+'</div>';
+  html+='<div class="opts" style="'+tg+'">';
+  s.opts.forEach(function(o){
+    var sel=(ans[s.key]&&ans[s.key].val===o.l)?'sel':'';
+    html+='<button class="opt '+sel+'"'
+      +' data-key="'+s.key+'"'
+      +' data-val="'+encodeURIComponent(o.l)+'"'
+      +' data-pts="'+o.pts+'"'
+      +' data-blocker="'+(o.b||'')+'"'
+      +' data-boost="'+(o.boost||'')+'"'
+      +' onclick="pick(this)">';
+    html+=o.l;
+    if(o.s) html+='<span class="sub">'+o.s+'</span>';
+    html+='</button>';
+  });
+  html+='</div>';
+  document.getElementById('steps-container').innerHTML=html;
+}
+
+function pick(el){
+  var key=el.getAttribute('data-key');
+  var val=decodeURIComponent(el.getAttribute('data-val'));
+  var pts=parseInt(el.getAttribute('data-pts'))||0;
+  var blocker=el.getAttribute('data-blocker')||'';
+  var boost=el.getAttribute('data-boost')||'';
+  ans[key]={val:val,pts:pts,blocker:blocker,boost:boost};
+  document.querySelectorAll('.opt').forEach(function(b){b.classList.remove('sel');});
+  el.classList.add('sel');
+}
+
+function nextStep(){
+  var key=steps[step].key;
+  if(!ans[key]){
+    var el=document.querySelector('.opts');
+    if(el){el.style.outline='2px solid #E24B4A';el.style.borderRadius='10px';
+      setTimeout(function(){el.style.outline='none';},900);}
+    return;
+  }
+  if(step<steps.length-1){step++;render();}
+  else genReport();
+}
+function prevStep(){if(step>0){step--;render();}}
+
+function computeScore(){
+  var dimPts={D1:[],D2:[],D3:[],D4:[],D5:[],D6:[]};
+  var blockers=[],boosts=[];
+  steps.forEach(function(s){
+    var a=ans[s.key]; if(!a) return;
+    if(s.dim&&dimPts[s.dim]) dimPts[s.dim].push(a.pts);
+    if(a.blocker) blockers.push(a.blocker);
+    if(a.boost) boosts.push(a.boost);
+  });
+  var dimAvg={};
+  Object.keys(dimPts).forEach(function(d){
+    var arr=dimPts[d];
+    dimAvg[d]=arr.length?arr.reduce(function(a,b){return a+b;},0)/arr.length:5;
+  });
+  var raw=0;
+  Object.keys(DIMS).forEach(function(d){raw+=(dimAvg[d]||5)*DIMS[d].weight;});
+  var boost=0;
+  if(boosts.indexOf('compta')>=0) boost+=0.4;
+  if(boosts.indexOf('contrat')>=0) boost+=0.4;
+  if(boosts.indexOf('mobile')>=0) boost+=0.3;
+  if(boosts.indexOf('genre')>=0) boost+=0.5;
+  if(boosts.indexOf('secteur')>=0) boost+=0.3;
+  if(boosts.indexOf('impact')>=0) boost+=0.3;
+  if(boosts.indexOf('export')>=0) boost+=0.2;
+  boost=Math.min(boost,2);
+  var malus=0;
+  if(blockers.indexOf('B1')>=0) malus+=2.5;
+  if(blockers.indexOf('B2')>=0) malus+=2.5;
+  if(blockers.indexOf('B3')>=0) malus+=1;
+  if(blockers.indexOf('B4')>=0) malus+=1;
+  var final=Math.min(Math.max(raw+boost-malus,0.5),10);
+  return {final:Math.round(final*10)/10,dimAvg:dimAvg,blockers:blockers,boosts:boosts};
+}
+
+function getRouting(sc){
+  if(sc<3) return {zone:"Pré-financement",color:C.red,bg:C.lred,desc:"Votre entreprise nécessite une formalisation et une structuration avant toute démarche de financement institutionnel."};
+  if(sc<5) return {zone:"Solutions alternatives",color:C.amber,bg:C.lamber,desc:"Vous accédez aux dispositifs semi-formels. Un plan de mise à niveau sur 6 mois ouvrira l'accès au financement bancaire."};
+  if(sc<7.5) return {zone:"Préparation bancaire",color:C.blue,bg:C.lblue,desc:"Votre dossier est bancable avec un renforcement ciblé. Vous êtes éligible aux financements formels avec accompagnement."};
+  return {zone:"Financement institutionnel",color:C.green,bg:C.lgreen,desc:"Votre entreprise est mature pour les financements institutionnels, le capital-risque régional ou les marchés financiers UEMOA."};
+}
+
+function getActionPlan(sc){
+  if(sc<3) return {title:"Plan d'action — Phase de structuration (60 à 90 jours)",intro:"Votre entreprise se trouve en phase de structuration. Des étapes fondamentales sont nécessaires avant toute démarche de financement.",items:[
+    {j:'J 1–7',cls:'',txt:"Procéder à l'immatriculation (RCCM) et obtenir le numéro IFU"},
+    {j:'J 1–7',cls:'',txt:"Ouvrir un compte bancaire professionnel dédié à l'activité"},
+    {j:'J 8–21',cls:'mid',txt:"Mettre en place une comptabilité formelle avec un expert-comptable agréé"},
+    {j:'J 8–21',cls:'mid',txt:"Régulariser la situation fiscale et sociale de l'entreprise"},
+    {j:'J 22–45',cls:'late',txt:"Constituer les premiers éléments financiers : CA, charges, résultat"},
+    {j:'J 45–90',cls:'late',txt:"Se rapprocher d'une structure d'appui aux PME pour un accompagnement à la formalisation"}]};
+  if(sc<5) return {title:"Plan d'action — Phase de mise à niveau (45 à 60 jours)",intro:"Votre entreprise dispose d'une base mais nécessite un renforcement avant d'accéder aux financements formels.",items:[
+    {j:'J 1–7',cls:'',txt:"Faire établir ou mettre à jour les bilans des 2 dernières années par un expert-comptable agréé"},
+    {j:'J 1–7',cls:'',txt:"Rassembler les justificatifs de conformité fiscale et sociale"},
+    {j:'J 8–21',cls:'mid',txt:"Formaliser le prévisionnel financier sur 3 ans avec un expert-comptable agréé"},
+    {j:'J 8–21',cls:'mid',txt:"Activer un compte Mobile Money professionnel pour constituer un historique de transactions"},
+    {j:'J 22–45',cls:'late',txt:"Préparer un dossier de demande de financement adapté à votre profil"},
+    {j:'J 45–60',cls:'late',txt:"Solliciter un entretien avec un conseiller financier pour identifier les dispositifs accessibles"}]};
+  if(sc<7.5) return {title:"Plan d'action — Phase de préparation bancaire (30 jours)",intro:"Votre profil est proche du seuil de bancabilité. En 30 jours, vous pouvez constituer un dossier solide et initier les premières démarches.",items:[
+    {j:'J 1–5',cls:'',txt:"Rassembler les 3 derniers bilans certifiés et l'attestation fiscale à jour"},
+    {j:'J 1–5',cls:'',txt:"Faire valider le prévisionnel financier 3 ans par un expert-comptable agréé"},
+    {j:'J 6–10',cls:'mid',txt:"Obtenir un devis équipementier détaillé pour constituer le dossier"},
+    {j:'J 6–10',cls:'mid',txt:"Identifier et lister les garanties mobilisables"},
+    {j:'J 11–20',cls:'late',txt:"Solliciter une simulation de financement auprès d'un établissement spécialisé"},
+    {j:'J 21–30',cls:'late',txt:"Rencontrer au moins deux établissements de crédit pour comparer les offres"}]};
+  return {title:"Plan d'action — Phase de levée de fonds (21 jours)",intro:"Votre entreprise présente un profil mature. Vous pouvez engager des démarches directement auprès des institutions et investisseurs.",items:[
+    {j:'J 1–3',cls:'',txt:"Mettre à jour la data room : bilans audités, tableaux de bord, KPIs et prévisionnel validé"},
+    {j:'J 1–5',cls:'',txt:"Préparer le mémorandum d'information (pitch deck + executive summary 2 pages)"},
+    {j:'J 5–10',cls:'mid',txt:"Identifier les partenaires financiers alignés avec votre secteur et stade de développement"},
+    {j:'J 10–14',cls:'mid',txt:"Prendre contact avec des conseillers spécialisés pour structurer l'opération"},
+    {j:'J 14–18',cls:'late',txt:"Lancer les premières discussions formelles avec les établissements ciblés"},
+    {j:'J 18–21',cls:'late',txt:"Ajuster le dossier selon les exigences exprimées par les financeurs"}]};
+}
+
+function drawRadar(id,ds){
+  var canvas=document.getElementById(id); if(!canvas) return;
+  var size=Math.min(canvas.parentElement.offsetWidth||340,340);
+  canvas.width=size; canvas.height=size;
+  var ctx=canvas.getContext('2d'),cx=size/2,cy=size/2,R=size/2-48,n=6;
+  var keys=Object.keys(ds),scores=keys.map(function(k){return ds[k];});
+  var dc=[C.navy,C.green,C.blue,'#7B3D99','#C07A20','#1A7A6E'];
+  function pt(i,r){var a=Math.PI/2-i*2*Math.PI/n;return[cx+r*R*Math.cos(a),cy+r*R*Math.sin(a)];}
+  for(var lv=1;lv<=5;lv++){
+    ctx.beginPath();
+    for(var i=0;i<n;i++){var p=pt(i,lv/5);i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]);}
+    ctx.closePath();ctx.strokeStyle='#D3D1C7';ctx.lineWidth=0.8;ctx.stroke();
+    var lp=pt(0,lv/5);ctx.fillStyle='#888';ctx.font='9px system-ui';ctx.textAlign='center';ctx.fillText(lv*2,lp[0],lp[1]-3);
+  }
+  for(var i=0;i<n;i++){var ep=pt(i,1);ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(ep[0],ep[1]);ctx.strokeStyle='#D3D1C7';ctx.lineWidth=0.8;ctx.stroke();}
+  ctx.beginPath();
+  for(var i=0;i<n;i++){var p=pt(i,scores[i]/10);i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]);}
+  ctx.closePath();ctx.fillStyle='rgba(46,111,163,0.18)';ctx.fill();ctx.strokeStyle=C.blue;ctx.lineWidth=2;ctx.stroke();
+  for(var i=0;i<n;i++){
+    var p=pt(i,scores[i]/10);
+    ctx.beginPath();ctx.arc(p[0],p[1],5,0,Math.PI*2);ctx.fillStyle=dc[i];ctx.fill();
+    ctx.beginPath();ctx.arc(p[0],p[1],2.5,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+    var lp=pt(i,1.28);ctx.fillStyle=dc[i];ctx.font='bold 9px system-ui';ctx.textAlign='center';ctx.fillText(DIM_SHORT[i],lp[0],lp[1]);
+    ctx.fillStyle=C.navy;ctx.font='bold 10px system-ui';ctx.fillText(scores[i]+'/10',lp[0],lp[1]+13);
+  }
+}
+
+async function genReport(){
+  var r=computeScore(),final=r.final,dimAvg=r.dimAvg,blockers=r.blockers,boosts=r.boosts;
+  var routing=getRouting(final),ap=getActionPlan(final);
+  var pays=(ans.pays||{}).val||"Afrique de l'Ouest";
+  var date=new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  var rawAns={};
+  Object.keys(ans).forEach(function(k){rawAns[k]=(ans[k]||{}).val||'';});
+  var topDev=DEVICES.map(function(d){return Object.assign({},d,{ms:d.score(rawAns)});}).sort(function(a,b){return b.ms-a.ms;}).slice(0,3);
+  var optis=[
+    {t:'Renforcer la gouvernance',d:"Formaliser un pacte d'associés et désigner un responsable financier dédié — signal décisif pour les établissements de crédit."},
+    {t:'Activer Mobile Money Professionnel',d:"Ouvrir un compte professionnel Wave ou Orange Money Pro pour constituer un historique de solvabilité alternatif reconnu."},
+    {t:'Dossier bilingue',d:"Traduire le plan d'affaires en anglais pour élargir l'accès aux fonds d'investissement panafricains et aux bailleurs internationaux."},
+    {t:"Projection d'amélioration",d:"Avec ces ajustements, votre niveau de maturité pourrait atteindre "+Math.min(final+1.8,10).toFixed(1)+"/10, ouvrant l'accès aux financements institutionnels régionaux."}
+  ];
+  var repC={};
+  steps.forEach(function(s){if(ans[s.key]) repC[s.key]=ans[s.key].val;});
+  var prospect_id = await saveProspectToSupabase({nom_entreprise:profil_repondant.entreprise||rawAns.nom||('PME '+(rawAns.pays||'UEMOA')),email:profil_repondant.email,telephone:profil_repondant.tel,pays:rawAns.pays,secteur:rawAns.secteur,statut_juridique:rawAns.statut,ca:rawAns.ca,anciennete:rawAns.anciennete,montant:rawAns.montant,objectif:rawAns.objectif,score_global:final,score_d1:Math.round((dimAvg.D1||0)*10)/10,score_d2:Math.round((dimAvg.D2||0)*10)/10,score_d3:Math.round((dimAvg.D3||0)*10)/10,score_d4:Math.round((dimAvg.D4||0)*10)/10,score_d5:Math.round((dimAvg.D5||0)*10)/10,score_d6:Math.round((dimAvg.D6||0)*10)/10,profil:routing.zone,routing_color:routing.color,blockers:blockers,boosts:boosts,niveau_audit:level,reponses:repC,fingerprint:buildFingerprint(),statut_crm:'nouveau',rapport_telecharge:false});
+  document.getElementById('questionnaire').style.display='none';
+  var rp=document.getElementById('rapport');
+  // Afficher le rapport
+  rp.innerHTML=buildHTML(final,routing,pays,date,topDev,ap,optis,blockers,boosts,dimAvg);
+  rp.classList.add('visible');
+  // Bannière statut envoi
+  var banner = document.getElementById('envoi-banner');
+  if(!banner){
+    banner = document.createElement('div');
+    banner.id = 'envoi-banner';
+    banner.style.cssText = 'background:#E8F5E8;border:1px solid #9FD9A1;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#2B7A2E;font-weight:600;display:flex;align-items:center;gap:10px';
+    banner.innerHTML = '⏳ Envoi de votre diagnostic en cours...';
+    rp.insertBefore(banner, rp.firstChild);
+  }
+  // Mettre à jour la bannière selon résultat
+  if(prospect_id){
+    banner.innerHTML = '✓ Votre diagnostic a bien été enregistré. Un consultant Financement & Croissance vous contactera sous 48h.';
+    banner.style.background = '#E8F5E8';
+    banner.style.borderColor = '#9FD9A1';
+    banner.style.color = '#2B7A2E';
+  } else {
+    banner.innerHTML = '⚠ Votre rapport est prêt mais l\'envoi au cabinet a échoué. Téléchargez le PDF et contactez-nous au +225 05 46 42 84 95.';
+    banner.style.background = '#FAEEDA';
+    banner.style.borderColor = '#E8B96A';
+    banner.style.color = '#BA7517';
+  }
+  requestAnimationFrame(function(){drawRadar('radarCanvas',dimAvg);});
+}
+
+function buildHTML(sc,rt,pays,date,devs,ap,optis,bl,bo,da){
+  var ca=(ans.ca||{}).val||'—',statut=(ans.statut||{}).val||'—',montant=(ans.montant||{}).val||'—',secteur=(ans.secteur||{}).val||'—';
+  var dcols=[C.navy,C.green,C.blue,'#7B3D99','#C07A20','#1A7A6E'];
+  var blkH='';
+  if(bl.length){
+    var bb='';
+    if(bl.indexOf('B1')>=0) bb+="• Incident signalé à la centrale de risques — accès bancaire bloqué jusqu'à régularisation<br>";
+    if(bl.indexOf('B2')>=0) bb+="• Absence de formalisation (RCCM/IFU) — inaccessibilité aux financements institutionnels<br>";
+    if(bl.indexOf('B3')>=0) bb+="• Situation fiscale non régularisée<br>";
+    if(bl.indexOf('B4')>=0) bb+="• Pas de séparation finances personnelles / professionnelles<br>";
+    blkH='<div class="blocker-box"><div class="blocker-title">Points de vigilance détectés</div><div class="blocker-body">'+bb+'</div></div>';
+  } else {
+    blkH='<div class="ok-box">✓ Aucun point bloquant identifié — votre dossier peut être présenté aux établissements de crédit.</div>';
+  }
+  var boH='';
+  if(bo.length){var lb={compta:'Comptabilité certifiée',contrat:'Contrats clients',mobile:'Mobile Money actif',genre:'Femme dirigeante',secteur:'Secteur prioritaire',impact:'Impact social/env.',export:'Orientation export'};boH='<div style="font-size:11px;color:#2B7A2E;margin-top:6px;font-weight:600">Points forts : '+bo.map(function(b){return lb[b]||b;}).join(' · ')+'</div>';}
+  var dimH='';
+  Object.keys(DIMS).forEach(function(d,i){var v=Math.round((da[d]||0)*10)/10;dimH+='<div class="dim-row"><div class="dim-row-top"><span class="dim-name" style="color:'+dcols[i]+'">'+DIMS[d].label+'</span><div style="display:flex;gap:8px;align-items:center"><span class="dim-weight">'+Math.round(DIMS[d].weight*100)+'%</span><span class="dim-score" style="color:'+dcols[i]+'">'+v+'/10</span></div></div><div class="dim-bar-bg"><div class="dim-bar-fill" style="width:'+(v*10)+'%;background:'+dcols[i]+'"></div></div></div>';});
+  var solH='';
+  devs.forEach(function(d,i){var mc=d.match_color,mt=d.ms>50?'Très adapté':d.ms>25?'Adapté':'À explorer';solH+='<div class="sol-card match-'+mc+'"><div class="sol-top"><div><div class="sol-name">'+(i+1)+'. '+d.nom+'</div><div class="sol-type">'+d.type+'</div></div><span class="match-pill '+mc+'">'+mt+'</span></div><div class="sol-cond">'+d.cond+'</div><div class="sol-tags"><span class="sol-tag">Ticket : '+d.tmin+' – '+d.tmax+'</span><span class="sol-tag">Taux : '+d.taux+'</span><span class="sol-tag">Délai : '+d.delai+'</span></div><div class="sol-action">→ '+d.action+'</div></div>';});
+  var actH='';
+  ap.items.forEach(function(a){actH+='<div class="act-row"><span class="act-j '+a.cls+'">'+a.j+'</span><span class="act-txt">'+a.txt+'</span></div>';});
+  var opH='';
+  optis.forEach(function(o){opH+='<div class="opti-card"><div class="opti-title">✓ '+o.t+'</div><div class="opti-body">'+o.d+'</div></div>';});
+  return '<div class="r-hero"><div class="r-hero-inner"><div>'
+    +'<div style="font-size:10px;opacity:.6;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Diagnostic financement PME — '+pays+'</div>'
+    +'<h2>Analyse de maturité financière</h2>'
+    +'<div class="sub">'+pays+' · Zone UEMOA · '+date+'</div>'
+    +'<div class="r-chips"><span class="r-chip">'+statut+'</span><span class="r-chip">'+secteur+'</span><span class="r-chip">CA : '+ca+'</span><span class="r-chip">Besoin : '+montant+'</span></div>'
+    +'</div><div class="score-circle"><span class="score-val">'+sc+'</span><span class="score-den">/10</span></div></div>'
+    +'<div class="routing-banner" style="background:'+rt.bg+';border:1px solid '+rt.color+'"><span style="font-weight:700;color:'+rt.color+'">Profil : '+rt.zone+' · Score '+sc+'/10</span><div class="routing-sub" style="color:'+rt.color+'">'+rt.desc+'</div>'+boH+'</div></div>'
+    +'<div class="kpi-grid"><div class="kpi-card"><div class="kpi-label">Score de maturité</div><div class="kpi-val" style="color:'+rt.color+'">'+sc+'/10</div></div><div class="kpi-card"><div class="kpi-label">Profil identifié</div><div class="kpi-val" style="color:'+rt.color+'">'+rt.zone+'</div></div><div class="kpi-card"><div class="kpi-label">Besoin</div><div class="kpi-val">'+montant+'</div></div><div class="kpi-card"><div class="kpi-label">Pays</div><div class="kpi-val">'+pays+'</div></div></div>'
+    +'<div class="r-section"><h3><div class="sec-num">1</div> Niveau de maturité — Analyse par dimension</h3>'+blkH+'<canvas id="radarCanvas" style="max-width:340px;display:block;margin:0 auto 16px"></canvas><div class="dim-bars">'+dimH+'</div></div>'
+    +'<div class="r-section"><h3><div class="sec-num">2</div> Recommandations de financement prioritaires</h3><p style="font-size:12px;color:var(--gray);margin-bottom:14px;line-height:1.55">Sur la base de votre profil <strong>'+rt.zone+'</strong>, nos consultants ont identifié les trois dispositifs les mieux adaptés à votre situation dans la zone UEMOA.</p>'+solH+'</div>'
+    +'<div class="r-section"><h3><div class="sec-num">3</div> '+ap.title+'</h3><p style="font-size:12px;color:var(--gray);margin-bottom:14px;line-height:1.55">'+ap.intro+'</p>'+actH+'</div>'
+    +'<div class="r-section"><h3><div class="sec-num">4</div> Pistes d\'optimisation</h3><p style="font-size:12px;color:var(--gray);margin-bottom:12px">Score actuel : <strong>'+sc+'/10</strong> · Potentiel : <strong>'+Math.min(sc+1.8,10).toFixed(1)+'/10</strong> · Seuil bancaire : <strong>5.0/10</strong></p><div class="opti-grid">'+opH+'</div></div>'
+    +'<div class="cta-box"><h3>Passez à l\'étape suivante</h3><p>Vous avez complété votre diagnostic en ligne. Un consultant <strong>Financement &amp; Croissance</strong> prend contact avec vous pour analyser votre dossier en détail.</p>'
+    +'<div class="cta-deliverables"><div class="cta-deliv"><div class="cta-deliv-title">Analyse approfondie</div><div class="cta-deliv-body">Revue complète par un consultant spécialisé PME UEMOA</div></div><div class="cta-deliv"><div class="cta-deliv-title">Sélection interlocuteurs</div><div class="cta-deliv-body">Identification des contacts dans les établissements ciblés</div></div><div class="cta-deliv"><div class="cta-deliv-title">Montage du dossier</div><div class="cta-deliv-body">Préparation du dossier complet prêt à soumettre</div></div><div class="cta-deliv"><div class="cta-deliv-title">Mise en relation directe</div><div class="cta-deliv-body">Introduction auprès des partenaires financiers sélectionnés</div></div></div>'
+    +'<div class="action-btns"><button class="btn-download" onclick="downloadPDF()">⬇ Télécharger mon rapport PDF</button><button class="btn-restart" onclick="restart()">← Recommencer</button></div>'
+    +'<div class="cta-phone">📞 +225 05 46 42 84 95</div><div class="cta-note">Réponse sous 48h · Sans engagement · Zone UEMOA &amp; CEDEAO</div></div>'
+    +'<div style="font-size:11px;color:var(--gray);text-align:center;margin-top:16px;line-height:1.7;padding:12px 16px;background:var(--light-gray);border-radius:9px">Ce diagnostic a été réalisé par <strong>Financement &amp; Croissance</strong> sur la base des réponses renseignées via notre questionnaire en ligne. Il constitue une première évaluation de votre profil de financement. Les conditions des dispositifs mentionnés sont indicatives. Vos informations sont traitées de manière strictement confidentielle.</div>';
+}
+
+function downloadPDF(){
+  var r=computeScore(),final=r.final,dimAvg=r.dimAvg,blockers=r.blockers;
+  var rt=getRouting(final),ap=getActionPlan(final);
+  var pays=(ans.pays||{}).val||"Afrique de l'Ouest";
+  var date=new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  var rawAns={};Object.keys(ans).forEach(function(k){rawAns[k]=(ans[k]||{}).val||'';});
+  var devs=DEVICES.map(function(d){return Object.assign({},d,{ms:d.score(rawAns)});}).sort(function(a,b){return b.ms-a.ms;}).slice(0,3);
+  var CO={navy:'#1B2A6B',green:'#3DAA3F',blue:'#2E6FA3',gray:'#5F5E5A',gold:'#C9A84C',lnavy:'#E8EBF5',lgreen:'#E8F5E8',lblue:'#E3EEF7',lgray:'#F1EFE8',mgray:'#D3D1C7',white:'#FFFFFF',black:'#1A1A1A',red:'#A32D2D',lred:'#FCEBEB'};
+  var rcMap={red:CO.red,amber:'#BA7517',blue:CO.blue,green:CO.green};
+  var rbMap={red:CO.lred,amber:'#FAEEDA',blue:CO.lblue,green:CO.lgreen};
+  var rc=rcMap[rt.color]||CO.blue,rb=rbMap[rt.color]||CO.lblue;
+  var dcols=[CO.navy,CO.green,CO.blue,'#7B3D99','#C07A20','#1A7A6E'];
+  var dkeys=Object.keys(DIMS);
+  var dRows=[[{text:'Axe',bold:true,color:CO.white,fontSize:8},{text:'Poids',bold:true,color:CO.white,fontSize:8},{text:'Score',bold:true,color:CO.white,fontSize:8},{text:'Critères',bold:true,color:CO.white,fontSize:8}]];
+  var crit={D1:'Statut OHADA, RCCM, IFU, conformité fiscale.',D2:'Comptabilité, bilans, rentabilité.',D3:'Clients, CA, Mobile Money.',D4:'Expérience, gouvernance.',D5:"Plan d'affaires, garanties.",D6:'Marché, scalabilité, impact.'};
+  dkeys.forEach(function(d,i){var v=Math.round((dimAvg[d]||0)*10)/10,lv=v>=7?'Solide':v>=5?'En développement':'À renforcer',sc2=v>=7?CO.green:v>=5?CO.blue:CO.red;dRows.push([{text:DIMS[d].label,bold:true,color:dcols[i],fontSize:8},{text:Math.round(DIMS[d].weight*100)+'%',fontSize:8,color:CO.gray},{text:v+'/10 '+lv,bold:true,fontSize:8,color:sc2},{text:crit[d]||'',fontSize:7.5,color:CO.black}]);});
+  var sRows=[[{text:'Solution',bold:true,color:CO.white,fontSize:8},{text:'Ticket',bold:true,color:CO.white,fontSize:8},{text:'Taux',bold:true,color:CO.white,fontSize:8},{text:'Délai',bold:true,color:CO.white,fontSize:8}]];
+  devs.forEach(function(d){sRows.push([{text:d.nom,bold:true,fontSize:8,color:CO.navy},{text:d.tmin+' – '+d.tmax,fontSize:8},{text:d.taux,fontSize:8},{text:d.delai,fontSize:8}]);});
+  var aRows=[];
+  ap.items.forEach(function(a,i){var col=i<2?CO.navy:i<4?CO.blue:CO.green;aRows.push([{text:a.j,bold:true,fontSize:8,color:CO.white,fillColor:col,alignment:'center'},{text:a.txt,fontSize:9,color:CO.black}]);});
+  var tblS=function(hbg,alt){return {fillColor:function(r){return r===0?hbg:r%2===0?alt:null;},hLineColor:CO.mgray,vLineColor:CO.mgray,hLineWidth:function(){return 0.3;},vLineWidth:function(){return 0.3;}};};
+  var dd={pageSize:'A4',pageMargins:[18*2.835,34*2.835,18*2.835,20*2.835],defaultStyle:{font:'Roboto',fontSize:9,color:CO.black},
+    header:function(){return {columns:[{stack:[{text:'Financement & Croissance',bold:true,fontSize:11,color:CO.white,margin:[14*2.835,8,0,2]},{text:"Évaluez votre capacité à obtenir un financement",fontSize:7.5,color:'#A8C4E0',margin:[14*2.835,0,0,0]}]},{stack:[{text:profil_repondant.entreprise||(ans.pays||{}).val||"Afrique de l'Ouest",bold:true,fontSize:10,color:'#C9A84C',alignment:'right',margin:[0,8,14*2.835,2]},{text:date,fontSize:7.5,color:'#A8C4E0',alignment:'right',margin:[0,0,14*2.835,0]}]}],fillColor:CO.navy};},
+    footer:function(pg,pages){return {columns:[{text:'Financement & Croissance  ·  +225 05 46 42 84 95  ·  Document confidentiel',fontSize:7,color:CO.gray,margin:[14*2.835,4*2.835,0,0]},{text:'Page '+pg+' / '+pages,fontSize:7,color:CO.gray,alignment:'right',margin:[0,4*2.835,14*2.835,0]}],fillColor:'#F1EFE8'};},
+    content:[
+      {text:'ANALYSE DE MATURITÉ FINANCIÈRE',fontSize:9,color:CO.green,margin:[0,6,0,4]},
+      {text:'Diagnostic Financement PME',fontSize:22,bold:true,color:CO.navy,margin:[0,0,0,4]},
+      {text:profil_repondant.entreprise?profil_repondant.entreprise+' · '+((ans.pays||{}).val||"Zone UEMOA")+' · '+date:((ans.pays||{}).val||"Afrique de l'Ouest")+' · Zone UEMOA · '+date,fontSize:10,color:CO.gray,margin:[0,0,0,6]},
+      {table:{widths:['*'],body:[[{columns:[
+        {stack:[{text:'Répondant',fontSize:8,color:'#A8C4E0',margin:[0,0,0,2]},{text:profil_repondant.nom||'—',bold:true,fontSize:10,color:CO.white}]},
+        {stack:[{text:'Entreprise',fontSize:8,color:'#A8C4E0',margin:[0,0,0,2]},{text:profil_repondant.entreprise||'—',bold:true,fontSize:10,color:CO.white}]},
+        {stack:[{text:'Contact',fontSize:8,color:'#A8C4E0',margin:[0,0,0,2]},{text:profil_repondant.email||'—',fontSize:9,color:CO.white},{text:profil_repondant.tel||'',fontSize:9,color:'#A8C4E0'}]},
+        {stack:[{text:'Ville / Pays',fontSize:8,color:'#A8C4E0',margin:[0,0,0,2]},{text:(profil_repondant.ville?(profil_repondant.ville+' · '):'')+(((ans.pays||{}).val)||'—'),fontSize:9,color:CO.white}]}
+      ],columnGap:12,margin:[10,10,10,10]}]]},layout:{fillColor:CO.navy,hLineColor:CO.navy,vLineColor:CO.navy,hLineWidth:function(){return 0;},vLineWidth:function(){return 0;}},margin:[0,0,0,14]},
+      
+      {columns:[{stack:[{text:'Score de maturité',fontSize:8,color:CO.gray,margin:[0,0,0,3]},{text:final+' / 10',fontSize:18,bold:true,color:rc}],fillColor:rb,margin:[0,0,6,0]},{stack:[{text:'Profil',fontSize:8,color:CO.gray,margin:[0,0,0,3]},{text:rt.zone,fontSize:13,bold:true,color:rc}],fillColor:rb,margin:[0,0,6,0]},{stack:[{text:'Besoin',fontSize:8,color:CO.gray,margin:[0,0,0,3]},{text:(ans.montant||{}).val||'—',fontSize:11,bold:true,color:CO.navy}],fillColor:CO.lnavy,margin:[0,0,6,0]},{stack:[{text:'Pays',fontSize:8,color:CO.gray,margin:[0,0,0,3]},{text:(ans.pays||{}).val||'—',fontSize:12,bold:true,color:CO.green}],fillColor:CO.lgreen}],columnGap:6,margin:[0,0,0,10]},
+      {table:{widths:['*'],body:[[{stack:[{text:'PROFIL : '+rt.zone.toUpperCase()+'  ·  Score '+final+'/10',bold:true,fontSize:10,color:rc,margin:[0,0,0,4]},{text:rt.desc,fontSize:9,color:CO.gray}],margin:[10,8,10,8]}]]},layout:{fillColor:rb,hLineColor:rc,vLineColor:rc,hLineWidth:function(){return 1;},vLineWidth:function(i){return i===0||i===1?1:0;}},margin:[0,0,0,14]},
+      {text:'',pageBreak:'after'},
+      {text:'Niveau de maturité financière',bold:true,fontSize:12,color:CO.navy,margin:[0,0,0,8]},
+      {table:{widths:[118,34,60,'*'],body:dRows},layout:tblS(CO.navy,CO.lgray),margin:[0,0,0,0]},
+      {text:'',pageBreak:'after'},
+      {text:'Recommandations de financement',bold:true,fontSize:12,color:CO.navy,margin:[0,0,0,8]},
+      {table:{widths:['*',80,90,70],body:sRows},layout:tblS(CO.navy,CO.lblue),margin:[0,0,0,16]},
+      {text:'',pageBreak:'after'},
+      {text:ap.title,bold:true,fontSize:12,color:CO.navy,margin:[0,0,0,8]},
+      {text:ap.intro,fontSize:9,color:CO.black,margin:[0,0,0,10],alignment:'justify'},
+      {table:{widths:[52,'*'],body:aRows},layout:tblS(CO.white,CO.lgray),margin:[0,0,0,20]},
+      {text:'',pageBreak:'after'},
+      {table:{widths:['*'],body:[[{stack:[{text:"Passez à l'étape suivante",bold:true,fontSize:18,color:CO.white,alignment:'center',margin:[0,0,0,8]},{text:"Vous avez complété votre diagnostic en ligne. Un consultant Financement & Croissance prend contact avec vous.",fontSize:10,color:'#A8C4E0',alignment:'center',margin:[0,0,0,16]},{text:'+225 05 46 42 84 95',bold:true,fontSize:14,color:CO.green,alignment:'center',margin:[0,0,0,4]},{text:"Réponse sous 48h  ·  Sans engagement  ·  Zone UEMOA & CEDEAO",fontSize:9,color:'#A8C4E0',alignment:'center'}],margin:[20,22,20,20]}]]},layout:{fillColor:CO.navy,hLineColor:CO.navy,vLineColor:CO.navy,hLineWidth:function(){return 0;},vLineWidth:function(){return 0;}},margin:[0,0,0,16]},
+      {text:"Ce diagnostic a été réalisé par Financement & Croissance sur la base des réponses renseignées via notre questionnaire en ligne. Il constitue une première évaluation de votre profil de financement. Les conditions des dispositifs mentionnés sont indicatives. Vos informations sont traitées de manière strictement confidentielle.",fontSize:9,color:CO.black,alignment:'justify',margin:[0,0,0,14]},
+      {table:{widths:['*'],body:[[{text:'Document confidentiel établi le '+date+'  ·  Financement & Croissance  ·  +225 05 46 42 84 95',fontSize:7.5,color:CO.gray,alignment:'center',margin:[8,6,8,6]}]]},layout:tblS(CO.lgray,CO.lgray)}
+    ]};
+  pdfMake.createPdf(dd).download('FC_Diagnostic_Financement_PME.pdf');
+  markRapportDownloaded(buildFingerprint());
+}
+
+function restart(){
+  ans={};step=0;
+  profil_repondant={nom:'',entreprise:'',email:'',tel:'',poste:'',ville:''};
+  document.getElementById('questionnaire').style.display='none';
+  document.getElementById('id-page').style.display='block';
+  // Vider les champs
+  ['nom','entreprise','email','tel','poste','ville'].forEach(function(f){
+    var el=document.getElementById('id-'+f); if(el) el.value='';
+  });
+  var rp=document.getElementById('rapport');
+  rp.classList.remove('visible');rp.innerHTML='';
+}
+
+// SUPABASE
+var SUPABASE_URL='https://dfvdeiaxkvrtycxodkmd.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmdmRlaWF4a3ZydHljeG9ka21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNjU2OTQsImV4cCI6MjA4OTk0MTY5NH0.Sr5KMpWLcuXRAwQh8Qz_u6etrk1EvedYIX5bIzDAi1o';
+var _sb=null;
+function getSB(){if(!_sb&&window.supabase&&SUPABASE_URL&&SUPABASE_URL.length>10){_sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);}return _sb;}
+function buildFingerprint(){var s=navigator.userAgent+navigator.language+Intl.DateTimeFormat().resolvedOptions().timeZone+window.screen.width+'x'+window.screen.height;return btoa(unescape(encodeURIComponent(s))).slice(0,32);}
+async function saveProspectToSupabase(p){
+  var sb=getSB();
+  if(!sb){
+    console.error('[F&C] getSB() retourne null — Supabase non initialisé');
+    showToastFC('⚠ Supabase non connecté','red');
+    return null;
+  }
+  console.log('[F&C] Tentative insert prospect:', p.nom_entreprise, p.email);
+  try{
+    var r=await sb.from('prospects').insert(p).select().single();
+    if(r.error){
+      console.error('[F&C] Erreur insert:', r.error.message, r.error.code, r.error.details);
+      showToastFC('⚠ Erreur sauvegarde: '+r.error.message,'red');
+      return null;
+    }
+    console.log('[F&C] ✓ Prospect enregistré, id:', r.data.id);
+    showToastFC('✓ Données envoyées au back-office','green');
+    await sb.rpc('detect_doublons',{p_id:r.data.id}).catch(function(){});
+    return r.data.id;
+  }catch(e){
+    console.error('[F&C] Exception:', e.message);
+    showToastFC('⚠ Exception: '+e.message,'red');
+    return null;
+  }
+}
+
+function showToastFC(msg, color){
+  var t=document.createElement('div');
+  t.textContent=msg;
+  t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:'
+    +(color==='green'?'#1B2A6B':'#A32D2D')
+    +';color:#fff;padding:13px 24px;border-radius:10px;font-size:14px;font-weight:600;z-index:9999;box-shadow:0 6px 20px rgba(0,0,0,.25);text-align:center;min-width:280px';
+  document.body.appendChild(t);
+  setTimeout(function(){
+    t.style.transition='opacity .4s';
+    t.style.opacity='0';
+    setTimeout(function(){t.remove();},400);
+  },4000);
+}
+async function markRapportDownloaded(fp){var sb=getSB();if(!sb) return;try{await sb.from('prospects').update({rapport_telecharge:true,rapport_telecharge_at:new Date().toISOString()}).eq('fingerprint',fp).order('created_at',{ascending:false}).limit(1);}catch(e){}}
+
+</script>
+</body>
+</html>
